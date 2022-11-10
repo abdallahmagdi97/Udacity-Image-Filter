@@ -1,6 +1,5 @@
 import express from 'express';
-import bodyParser from 'body-parser';
-import {filterImageFromURL, deleteLocalFiles, deleteLocalFile} from './util/util';
+import {filterImageFromURL, deleteLocalFile} from './util/util';
 import { Request, Response } from "express";
 
 (async () => {
@@ -12,9 +11,12 @@ import { Request, Response } from "express";
   const port = process.env.PORT || 8082;
   
   // Use the body parser middleware for post requests
-  app.use(bodyParser.json());
+  app.use(express.urlencoded({extended: true}));
+  app.use(express.json())
 
   let fileSystem = require('fs');
+
+  //CORS Should be restricted 
   // @TODO1 IMPLEMENT A RESTFUL ENDPOINT
   // GET /filteredimage?image_url={{URL}}
   // endpoint to filter an image from a public url.
@@ -28,22 +30,22 @@ import { Request, Response } from "express";
   //    image_url: URL of a publicly accessible image
   // RETURNS
   //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
-  app.get("/filteredimage", async (req: Request, res: Response) => {
-    let image_url:string = req.query.image_url.toString();
-    
+  app.get("/filteredimage", async (request: Request, response: Response) => {
+    let image_url:string = request.query.image_url.toString();
+    console.log(image_url);
     if(!image_url){
-      res.sendStatus(400).send("try GET /filteredimage?image_url={{??}}")
+      response.sendStatus(400).send("try GET /filteredimage?image_url={{??}}")
     }
-
+    
     let path:string = await filterImageFromURL(image_url)
-
+    console.log(path);
     if(!path){
-      res.sendStatus(400).send("Error getting image!")
+      response.sendStatus(400).send("Error getting image!")
     }
 
-    res.sendFile(path)
+    response.sendFile(path)
 
-    res.on("close",function () {
+    response.on("close",function () {
       deleteLocalFile(path)
     })
 
@@ -54,7 +56,7 @@ import { Request, Response } from "express";
   
   // Root Endpoint
   // Displays a simple message to the user
-  app.get( "/", async ( req: any, res: { send: (arg0: string) => void; } ) => {
+  app.get( "/", async (_req, res: { send: (arg0: string) => void; } ) => {
     res.send("try GET /filteredimage?image_url={{}}")
     //res.send("hello");
   } );
